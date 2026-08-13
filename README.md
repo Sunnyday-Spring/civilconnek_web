@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Civil Connek Web Application & Administrative Portal
+
+Civil Connek Web Application is an enterprise web solution and administrative management system developed for Civil Connek Co., Ltd. The system provides a public corporate web portal alongside a secure internal administration portal for managing project portfolios, tracking construction project queues, and processing client inquiries.
+
+## System Overview
+
+The system is structured into two primary components:
+
+1. **Public Web Portal**: Provides corporate information, architectural and engineering services overview, interactive project portfolio showcase, real-time construction progress tracking, and client inquiry forms.
+2. **Administrative Management Portal (Admin Hub)**: A password-protected administrative backend enabling authorized personnel to manage portfolio projects, adjust construction site queue status and completion percentages, review incoming client inquiries, and manage project images.
+
+---
+
+## Technical Stack
+
+- **Frontend Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Database & Storage**: Supabase (PostgreSQL Database & Public Object Storage)
+- **Authentication**: Middleware-based Cookie Session Guard
+- **Progressive Web App (PWA)**: Web App Manifest for mobile installation
+
+---
+
+## Key Features
+
+### Public Portal
+- Dynamic fetching of completed and ongoing construction projects.
+- Single-project detail pages with multi-step construction photo galleries.
+- Construction Site Queue Tracker showing real-time progress percentages.
+- Client inquiry submission saving directly to PostgreSQL database.
+
+### Administrative Portal
+- **Dashboard Hub (`/admin`)**: Central portal for quick access to all administration modules.
+- **Portfolio Management (`/admin/projects`)**: Create, inspect, and delete project items with multi-file photo uploads.
+- **Queue Management (`/admin/queue`)**: Manage construction site queues, operational statuses, and progress completion percentages.
+- **Client Inquiries Inbox (`/admin/messages`)**: Review client inquiries, contact numbers, and update resolution statuses.
+- **PWA Installation**: Configured Web App Manifest (`/admin-manifest.json`) allowing standalone mobile application installation.
+
+---
+
+## Environment Variables Configuration
+
+To run the application locally or deploy to production, create a `.env.local` file in the root directory with the following variables:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://<your-supabase-project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
+ADMIN_PASSWORD=civilconnek1234
+```
+
+---
+
+## Database Setup Instructions
+
+The database schema and storage policies are defined in `supabase/schema.sql`.
+
+To initialize the database:
+1. Open the Supabase Dashboard SQL Editor.
+2. Execute the commands provided in `supabase/schema.sql` to create the required tables:
+   - `public.projects`
+   - `public.project_photos`
+   - `public.contact_messages`
+   - `public.construction_queue`
+   - `storage.buckets` (`project-images`)
+3. Verify that Row Level Security (RLS) policies and public storage access policies are applied correctly.
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Installation
+
+Install project dependencies using npm:
+
+```bash
+npm install
+```
+
+### Running the Development Server
+
+Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application will be accessible at `http://localhost:3000`. The administrative portal is accessible at `http://localhost:3000/admin`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To construct an optimized production build:
 
-## Learn More
+```bash
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+To run the production build locally:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## License and Copyright
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Copyright (c) 2026 Civil Connek Co., Ltd. All rights reserved.
