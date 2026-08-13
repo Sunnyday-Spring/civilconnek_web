@@ -1,10 +1,36 @@
 'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import Navbar from '@/components/Navbar'
+import FloatingMobileBar from '@/components/FloatingMobileBar'
 import { fetchProjects, fetchQueue } from '@/lib/supabase/projects'
 import { Project, QueueItem } from '@/lib/supabase/types'
 import { createClient } from '@/lib/supabase/client'
+
+import {
+  Compass,
+  Building2,
+  HardHat,
+  Home as HomeIcon,
+  ClipboardCheck,
+  Phone,
+  Mail,
+  MapPin,
+  User,
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+  ExternalLink,
+  Loader2,
+  Send,
+  Award,
+  Calendar,
+  Briefcase,
+  Users,
+  Smile,
+} from 'lucide-react'
 
 function DrawBorderCard({ children, className = '', href = '/services' }: {
   children: React.ReactNode
@@ -30,7 +56,6 @@ function DrawBorderCard({ children, className = '', href = '/services' }: {
       rect.setAttribute('height', String(h))
     }
 
-    // ใช้ JS event listener แทน Tailwind group-hover (ไม่ทำงานกับ SVG attribute)
     const handleMouseEnter = () => {
       rect.style.strokeDashoffset = '0'
       card.style.backgroundColor = '#0b4a74'
@@ -58,10 +83,10 @@ function DrawBorderCard({ children, className = '', href = '/services' }: {
     <Link
       href={href}
       ref={cardRef}
-      className={`relative bg-white border border-slate-200/60 rounded-2xl group hover:-translate-y-1 hover:shadow-xl block ${className}`}
+      className={`relative bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl group hover:-translate-y-1 hover:shadow-xl block active:scale-[0.99] transition-all duration-300 ${className}`}
       style={{ transition: 'background-color 0.3s ease, color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease' }}
     >
-      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ overflow: 'visible' }}>
+      <svg className="absolute inset-0 w-full h-full pointer-events-none hidden sm:block" style={{ overflow: 'visible' }}>
         <defs>
           <linearGradient id="card-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#1e90ff" />
@@ -86,6 +111,7 @@ function DrawBorderCard({ children, className = '', href = '/services' }: {
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([])
   const [queues, setQueues] = useState<QueueItem[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>('ทั้งหมด')
 
   // Contact Form State
   const [contactName, setContactName] = useState('')
@@ -131,271 +157,355 @@ export default function Home() {
     }
   }
 
+  // Filter projects by category
+  const categories = ['ทั้งหมด', 'งานสถาปัตยกรรม', 'งานโครงสร้าง', 'งานอาคารพักอาศัย', 'งานปรับปรุงรีโนเวท']
+  const filteredProjects = selectedCategory === 'ทั้งหมด'
+    ? projects
+    : projects.filter(p => p.category?.toLowerCase().includes(selectedCategory.toLowerCase()) || p.type?.toLowerCase().includes(selectedCategory.toLowerCase()))
+
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900">
+    <div className="min-h-screen bg-white font-sans text-slate-900 pb-16 md:pb-0">
+      {/* 1. NAVIGATION BAR */}
+      <Navbar />
 
-      {/* 1. แถบเมนู (NAVIGATION BAR) */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="relative w-12 h-12">
-              <Image src="/logo.png" alt="โลโก้ บริษัท ซีวิล คอนเนค จำกัด" fill sizes="48px" className="object-contain" />
-            </div>
-            <div className="hidden sm:block text-left">
-              <h1 className="font-extrabold text-lg leading-none tracking-tight">CIVIL CONNEK</h1>
-              <p className="text-[10px] text-slate-500 tracking-[0.2em] font-bold uppercase">บริษัท ซีวิล คอนเนค จำกัด</p>
-            </div>
-          </div>
-          <div className="hidden md:flex gap-8 text-sm font-bold text-slate-600">
-            <Link href="/" className="hover:text-[#0b4a74] transition">หน้าแรก</Link>
-            <Link href="#services" className="hover:text-[#0b4a74] transition">บริการของเรา</Link>
-            <Link href="#projects" className="hover:text-[#0b4a74] transition">ผลงาน</Link>
-            <Link href="#about" className="hover:text-[#0b4a74] transition">เกี่ยวกับเรา</Link>
-            <Link href="#contact" className="hover:text-[#0b4a74] transition">ติดต่อสอบถาม</Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* 2. ส่วนหัวเว็บ (HERO SECTION) */}
-      <section className="relative h-[85vh] bg-slate-900 flex items-center overflow-hidden">
+      {/* 2. HERO SECTION */}
+      <section className="relative min-h-[85vh] py-16 md:py-24 bg-slate-900 flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image src="/hero-bg.jpg" alt="หน้าไซต์งานก่อสร้าง" fill className="object-cover" priority />
-          <div className="absolute inset-0 bg-slate-950/50"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/75 to-slate-950/40" />
         </div>
-        <div className="relative z-20 max-w-7xl mx-auto px-6 w-full">
-          <div className="max-w-3xl space-y-6">
-            <div className="inline-block px-4 py-1 bg-[#1e90ff]/20 text-[#1e90ff] rounded-full text-xs font-bold tracking-widest uppercase">
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 w-full">
+          <div className="max-w-3xl space-y-5 sm:space-y-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#1e90ff]/20 text-[#1e90ff] border border-[#1e90ff]/30 rounded-full text-xs font-bold tracking-wider uppercase">
+              <span className="w-2 h-2 rounded-full bg-[#1e90ff] animate-pulse" />
               ผู้เชี่ยวชาญด้านงานก่อสร้างและวิศวกรรม
             </div>
-            <h2 className="text-5xl md:text-7xl font-extrabold text-white leading-[1.1]">
-              สร้างสรรค์ <span className="text-[#1e90ff]">โครงสร้าง</span> <br />สู่อนาคตที่ยั่งยืน
+            <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight md:leading-[1.1]">
+              สร้างสรรค์ <span className="text-[#1e90ff]">โครงสร้าง</span> <br className="hidden sm:inline" />สู่อนาคตที่ยั่งยืน
             </h2>
-            <p className="text-lg md:text-xl text-slate-300 font-light max-w-2xl leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-slate-300 font-light max-w-2xl leading-relaxed">
               บริการออกแบบและรับเหมาก่อสร้างครบวงจร โดยทีมวิศวกรและสถาปนิกมืออาชีพ
               มุ่งเน้นคุณภาพ มาตรฐานวิศวกรรม และความพึงพอใจของลูกค้าเป็นสำคัญ
             </p>
-            <div className="flex flex-wrap gap-4 pt-4">
-              <Link href="#projects" className="bg-[#1e90ff] text-white px-10 py-4 rounded-lg font-bold text-lg hover:shadow-lg hover:shadow-[#1e90ff]/40 transition-all hover:-translate-y-1">ชมผลงานของเรา</Link>
-              <Link href="#contact" className="bg-white/10 backdrop-blur-md text-white border border-white/30 px-10 py-4 rounded-lg font-bold text-lg hover:bg-white/20 transition">ติดต่อเรา</Link>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
+              <Link
+                href="#projects"
+                className="bg-[#1e90ff] text-white px-8 py-4 rounded-xl font-bold text-base sm:text-lg text-center hover:bg-blue-600 shadow-lg hover:shadow-[#1e90ff]/40 transition-all active:scale-98 flex items-center justify-center gap-2"
+              >
+                <Building2 className="w-5 h-5" />
+                <span>ชมผลงานของเรา</span>
+              </Link>
+              <a
+                href="tel:0982192091"
+                className="bg-emerald-600 sm:bg-white/10 sm:backdrop-blur-md text-white border border-emerald-500 sm:border-white/30 px-8 py-4 rounded-xl font-bold text-base sm:text-lg text-center hover:bg-white/20 transition active:scale-98 flex items-center justify-center gap-2"
+              >
+                <Phone className="w-5 h-5" />
+                <span>โทรสอบถาม: 098-219-2091</span>
+              </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. ตัวเลขสถิติ (STATISTICS) */}
-      <div className="bg-white py-16 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+      {/* 3. STATISTICS */}
+      <div className="bg-white py-10 sm:py-16 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
           {[
-            { label: 'โครงการที่สำเร็จ', value: '30+' },
-            { label: 'ประสบการณ์ (ปี)', value: '12+' },
-            { label: 'ทีมวิศวกรเชี่ยวชาญ', value: '45+' },
-            { label: 'ความพึงพอใจลูกค้า', value: '100%' },
-          ].map((stat, i) => (
-            <div key={i} className="text-center group">
-              <div className="text-4xl font-black text-[#0b4a74] mb-1 group-hover:scale-110 transition-transform">{stat.value}</div>
-              <div className="text-sm text-slate-500 font-bold uppercase tracking-wide">{stat.label}</div>
-            </div>
-          ))}
+            { label: 'โครงการที่สำเร็จ', value: '30+', icon: Award },
+            { label: 'ประสบการณ์ (ปี)', value: '12+', icon: Calendar },
+            { label: 'ทีมวิศวกรเชี่ยวชาญ', value: '45+', icon: Users },
+            { label: 'ความพึงพอใจลูกค้า', value: '100%', icon: Smile },
+          ].map((stat, i) => {
+            const IconComp = stat.icon
+            return (
+              <div key={i} className="text-center p-4 rounded-2xl bg-slate-50 sm:bg-transparent border sm:border-0 border-slate-100 flex flex-col items-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0b4a74] flex items-center justify-center mb-2">
+                  <IconComp className="w-5 h-5" />
+                </div>
+                <div className="text-3xl sm:text-4xl md:text-5xl font-black text-[#0b4a74] mb-1">{stat.value}</div>
+                <div className="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-wide">{stat.label}</div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      {/* 4. บริการของเรา (SERVICES) */}
-      <section id="services" className="py-24 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h3 className="text-[#1e90ff] font-bold tracking-[0.3em] text-sm uppercase mb-4">OUR SERVICES</h3>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900">บริการที่เชี่ยวชาญ</h2>
-            <div className="w-12 h-1 bg-[#0b4a74] mx-auto mt-6 rounded-full"></div>
+      {/* 4. SERVICES */}
+      <section id="services" className="py-16 sm:py-24 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+            <h3 className="text-[#1e90ff] font-bold tracking-[0.3em] text-xs sm:text-sm uppercase mb-3">OUR SERVICES</h3>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900">บริการที่เชี่ยวชาญ</h2>
+            <div className="w-12 h-1 bg-[#0b4a74] mx-auto mt-4 rounded-full" />
           </div>
 
           {/* Featured 2 cards */}
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
             {[
-              { title: 'งานออกแบบสถาปัตยกรรม', icon: '🏛️', desc: 'ออกแบบบ้าน อาคารสำนักงาน และโครงการอสังหาริมทรัพย์ที่ตอบโจทย์การใช้งาน ด้วยทีมสถาปนิกมืออาชีพและซอฟต์แวร์ออกแบบระดับสากล' },
-              { title: 'งานวิศวกรรมโครงสร้าง', icon: '🏗️', desc: 'ควบคุมการก่อสร้างและคำนวณโครงสร้างตามมาตรฐานวิศวกรรมที่ปลอดภัย โดยทีมวิศวกรที่ได้รับใบอนุญาตประกอบวิชาชีพ' },
-            ].map((service, i) => (
-              <DrawBorderCard key={i} className="p-10">
-                <span className="inline-block text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded bg-blue-50 text-[#0b4a74] mb-5">
-                  งานหลัก
-                </span>
-                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl mb-5">
-                  {service.icon}
-                </div>
-                <h4 className="text-xl font-bold mb-3">{service.title}</h4>
-                <p className="leading-relaxed text-sm opacity-70">{service.desc}</p>
-                <p className="mt-5 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">ดูรายละเอียด →</p>
-              </DrawBorderCard>
-            ))}
+              { title: 'งานออกแบบสถาปัตยกรรม', icon: Compass, desc: 'ออกแบบบ้าน อาคารสำนักงาน และโครงการอสังหาริมทรัพย์ที่ตอบโจทย์การใช้งาน ด้วยทีมสถาปนิกมืออาชีพและซอฟต์แวร์ออกแบบระดับสากล' },
+              { title: 'งานวิศวกรรมโครงสร้าง', icon: Building2, desc: 'ควบคุมการก่อสร้างและคำนวณโครงสร้างตามมาตรฐานวิศวกรรมที่ปลอดภัย โดยทีมวิศวกรที่ได้รับใบอนุญาตประกอบวิชาชีพ' },
+            ].map((service, i) => {
+              const ServiceIcon = service.icon
+              return (
+                <DrawBorderCard key={i} className="p-6 sm:p-8 md:p-10">
+                  <span className="inline-block text-[10px] sm:text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full bg-blue-50 text-[#0b4a74] mb-4">
+                    งานหลัก
+                  </span>
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-[#0b4a74] mb-4">
+                    <ServiceIcon className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-lg sm:text-xl font-bold mb-2">{service.title}</h4>
+                  <p className="leading-relaxed text-sm opacity-80">{service.desc}</p>
+                  <div className="mt-4 sm:mt-6 text-xs sm:text-sm font-semibold text-[#1e90ff] flex items-center gap-1">
+                    <span>รายละเอียดเพิ่มเติม</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </DrawBorderCard>
+              )
+            })}
           </div>
 
           {/* Bottom 3 cards */}
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {[
-              { title: 'รับเหมาก่อสร้างครบวงจร', icon: '👷', desc: 'ดูแลตั้งแต่การเตรียมพื้นที่จนถึงส่งมอบงาน ด้วยทีมงานมืออาชีพและวัสดุคุณภาพ' },
-              { title: 'งานปรับปรุงและรีโนเวท', icon: '🏠', desc: 'เปลี่ยนโฉมอาคารเก่าให้ดูทันสมัยและแข็งแรงทนทาน พร้อมการรับประกันงาน' },
-              { title: 'ที่ปรึกษาด้านวิศวกรรม', icon: '🧠', desc: 'ให้คำปรึกษาเชิงเทคนิคและการตรวจสอบอาคารโดยผู้เชี่ยวชาญเฉพาะทาง' },
-            ].map((service, i) => (
-              <DrawBorderCard key={i} className="p-8">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl mb-5">
-                  {service.icon}
-                </div>
-                <h4 className="text-lg font-bold mb-3">{service.title}</h4>
-                <p className="leading-relaxed text-sm opacity-70">{service.desc}</p>
-                <p className="mt-5 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">ดูรายละเอียด →</p>
-              </DrawBorderCard>
-            ))}
+              { title: 'รับเหมาก่อสร้างครบวงจร', icon: HardHat, desc: 'ดูแลตั้งแต่การเตรียมพื้นที่จนถึงส่งมอบงาน ด้วยทีมงานมืออาชีพและวัสดุคุณภาพ' },
+              { title: 'งานปรับปรุงและรีโนเวท', icon: HomeIcon, desc: 'เปลี่ยนโฉมอาคารเก่าให้ดูทันสมัยและแข็งแรงทนทาน พร้อมการรับประกันงาน' },
+              { title: 'ที่ปรึกษาด้านวิศวกรรม', icon: ClipboardCheck, desc: 'ให้คำปรึกษาเชิงเทคนิคและการตรวจสอบอาคารโดยผู้เชี่ยวชาญเฉพาะทาง' },
+            ].map((service, i) => {
+              const ServiceIcon = service.icon
+              return (
+                <DrawBorderCard key={i} className="p-6 sm:p-8">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-[#0b4a74] mb-4">
+                    <ServiceIcon className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold mb-2">{service.title}</h4>
+                  <p className="leading-relaxed text-xs sm:text-sm opacity-80">{service.desc}</p>
+                  <div className="mt-4 text-xs sm:text-sm font-semibold text-[#1e90ff] flex items-center gap-1">
+                    <span>รายละเอียดเพิ่มเติม</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </DrawBorderCard>
+              )
+            })}
           </div>
         </div>
       </section>
 
-      {/* 5. ส่วนผลงาน (PORTFOLIO) */}
-      <section id="projects" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
+      {/* 5. PORTFOLIO / PROJECTS */}
+      <section id="projects" className="py-16 sm:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 sm:mb-12 gap-4">
             <div>
-              <h2 className="text-4xl font-extrabold text-slate-900 leading-tight">โครงการที่โดดเด่น</h2>
-              <p className="text-slate-500 mt-3 text-lg font-light">รวบรวมความภาคภูมิใจและมาตรฐานงานก่อสร้างระดับพรีเมียม</p>
+              <span className="inline-block px-3 py-1 bg-blue-50 text-[#0b4a74] rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+                PORTFOLIO
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight">โครงการที่โดดเด่น</h2>
+              <p className="text-slate-500 mt-2 text-sm sm:text-base font-light">รวบรวมผลงานมาตรฐานงานก่อสร้างระดับพรีเมียม</p>
             </div>
-            <Link href="/projects" className="text-[#0b4a74] font-bold border-b-2 border-[#0b4a74] pb-1 hover:text-[#1e90ff] hover:border-[#1e90ff] transition">ดูผลงานทั้งหมด</Link>
+
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-[#0b4a74] text-white shadow-md'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
-          
-          {projects.length === 0 ? (
-            <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-12 text-center max-w-xl mx-auto">
-              <div className="text-4xl mb-3">🏗️</div>
-              <h3 className="text-lg font-bold text-slate-800 mb-1">กำลังอัปเดตผลงานโครงการ</h3>
+
+          {filteredProjects.length === 0 ? (
+            <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-8 sm:p-12 text-center max-w-xl mx-auto">
+              <Building2 className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-1">กำลังอัปเดตผลงานโครงการ</h3>
               <p className="text-xs text-slate-500 font-medium">ผลงานโครงการก่อสร้างใหม่กำลังถูกเพิ่มเข้ามา เร็วๆ นี้</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {projects.map((project) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              {filteredProjects.map((project) => {
                 const rawImg = project.cover_image || (project as any).img || ''
                 const coverImg = rawImg && !rawImg.startsWith('blob:') ? rawImg : '/Project/hor-puk-chang-ton/complete.jpg'
                 return (
-                  <Link key={`${project.id}`} href={`/project/${project.id}`} className="group relative aspect-[3/4] bg-slate-200 rounded-3xl overflow-hidden shadow-lg block">
-                    {/* รูปภาพ */}
+                  <Link
+                    key={`${project.id}`}
+                    href={`/project/${project.id}`}
+                    className="group relative aspect-[4/3] sm:aspect-[3/4] bg-slate-200 rounded-2xl sm:rounded-3xl overflow-hidden shadow-md hover:shadow-xl active:scale-[0.99] transition-all duration-300 block"
+                  >
                     <Image
                       src={coverImg}
                       alt={project.title}
                       fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    {/* gradient ด้านล่าง — แสดงตลอดเวลา */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/20 to-transparent" />
-                    {/* ข้อความ — แสดงตลอดเวลา ไม่ต้อง hover */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6">
-                      <p className="text-[#1e90ff] text-xs font-bold uppercase tracking-widest mb-2">{project.category}</p>
-                      <h4 className="text-white text-lg font-bold leading-tight">{project.title}</h4>
-                      <p className="text-slate-400 mt-2 text-xs">📍 {project.location}</p>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+                      <span className="inline-block px-2.5 py-0.5 bg-[#1e90ff]/80 text-white rounded-md text-[10px] font-bold uppercase tracking-wider mb-1.5">
+                        {project.category}
+                      </span>
+                      <h4 className="text-white text-base sm:text-lg font-bold leading-snug line-clamp-2">{project.title}</h4>
+                      <p className="text-slate-300 mt-1 text-xs flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-[#1e90ff] shrink-0" />
+                        <span>{project.location}</span>
+                      </p>
                     </div>
                   </Link>
                 )
               })}
             </div>
           )}
-
         </div>
       </section>
 
-      {/* 5.5. ตารางคิวและสถานะงานก่อสร้าง (CONSTRUCTION QUEUE TRACKER) */}
-      <section id="queue" className="py-24 bg-slate-900 text-white overflow-hidden relative">
-          <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="inline-block px-4 py-1 bg-[#1e90ff]/20 text-[#1e90ff] rounded-full text-xs font-bold tracking-widest uppercase mb-3">
-                LIVE SITE TRACKER
-              </span>
-              <h2 className="text-4xl md:text-5xl font-extrabold text-white">ตารางคิวและสถานะงานก่อสร้าง</h2>
-              <p className="text-slate-400 mt-3 text-lg font-light">ติดตามความคืบหน้าการดำเนินงานก่อสร้างแต่ละไซต์งานแบบเรียลไทม์</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {queues.map((q) => {
-                const statusInfo =
-                  q.status === 'in_progress'
-                    ? { label: '🏗️ กำลังก่อสร้าง', bg: 'bg-blue-500/20 text-[#1e90ff] border-blue-500/30' }
-                    : q.status === 'completed'
-                    ? { label: '✅ เสร็จเรียบร้อย', bg: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' }
-                    : { label: '⏳ รอคิวเริ่มงาน', bg: 'bg-amber-500/20 text-amber-300 border-amber-500/30' }
-
-                return (
-                  <div key={q.id} className="bg-slate-800/80 border border-slate-700/80 rounded-3xl p-6 space-y-5 backdrop-blur-md">
-                    <div className="flex justify-between items-start gap-3">
-                      <div>
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${statusInfo.bg}`}>
-                          {statusInfo.label}
-                        </span>
-                        <h3 className="text-xl font-bold text-white mt-3 leading-snug">{q.project_name}</h3>
-                        <p className="text-xs text-slate-400 mt-1">📍 {q.location} · 👤 {q.client_name}</p>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="space-y-2 pt-2">
-                      <div className="flex justify-between items-center text-xs font-bold">
-                        <span className="text-slate-400 uppercase tracking-wider">ความคืบหน้า</span>
-                        <span className="text-[#1e90ff]">{q.progress_percent}%</span>
-                      </div>
-                      <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-700">
-                        <div
-                          className="h-full bg-gradient-to-r from-[#0b4a74] to-[#1e90ff] rounded-full transition-all duration-700"
-                          style={{ width: `${q.progress_percent}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {(q.start_date || q.estimated_end_date) && (
-                      <div className="flex justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-700/50">
-                        <span>เริ่มงาน: {q.start_date || '-'}</span>
-                        <span>คาดว่าเสร็จ: {q.estimated_end_date || '-'}</span>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+      {/* 6. CONSTRUCTION QUEUE TRACKER */}
+      <section id="queue" className="py-16 sm:py-24 bg-slate-900 text-white relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+            <span className="inline-block px-3.5 py-1 bg-[#1e90ff]/20 text-[#1e90ff] border border-[#1e90ff]/30 rounded-full text-xs font-bold tracking-wider uppercase mb-3">
+              LIVE SITE TRACKER
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white">ตารางคิวและสถานะงานก่อสร้าง</h2>
+            <p className="text-slate-400 mt-2 text-sm sm:text-base font-light">ติดตามความคืบหน้าการดำเนินงานก่อสร้างแต่ละไซต์งานแบบเรียลไทม์</p>
           </div>
-        </section>
 
-      {/* 6. ส่วนติดต่อเรา (CONTACT) */}
-      <section id="contact" className="py-24 bg-[#0b4a74] text-white overflow-hidden relative">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 relative z-10">
-          <div className="space-y-8">
-            <h2 className="text-5xl font-extrabold leading-tight">พร้อมเริ่มโปรเจกต์ <br />กับเราแล้วหรือยัง?</h2>
-            <p className="text-slate-300 text-xl font-light italic border-l-4 border-[#1e90ff] pl-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {queues.map((q) => {
+              const statusInfo =
+                q.status === 'in_progress'
+                  ? { label: 'กำลังก่อสร้าง', icon: HardHat, bg: 'bg-blue-500/20 text-[#1e90ff] border-blue-500/30' }
+                  : q.status === 'completed'
+                  ? { label: 'เสร็จเรียบร้อย', icon: CheckCircle2, bg: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' }
+                  : { label: 'รอคิวเริ่มงาน', icon: Clock, bg: 'bg-amber-500/20 text-amber-300 border-amber-500/30' }
+
+              const StatusIcon = statusInfo.icon
+
+              return (
+                <div key={q.id} className="bg-slate-800/90 border border-slate-700/80 rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-4 shadow-lg">
+                  <div className="flex justify-between items-start gap-3">
+                    <div>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusInfo.bg}`}>
+                        <StatusIcon className="w-3.5 h-3.5" />
+                        <span>{statusInfo.label}</span>
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-bold text-white mt-2.5 leading-snug">{q.project_name}</h3>
+                      <p className="text-xs text-slate-400 mt-1.5 flex flex-wrap items-center gap-2">
+                        <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400" />{q.location}</span>
+                        <span>·</span>
+                        <span className="flex items-center gap-1"><User className="w-3.5 h-3.5 text-slate-400" />{q.client_name}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex justify-between items-center text-xs font-bold">
+                      <span className="text-slate-400 uppercase tracking-wider">ความคืบหน้า</span>
+                      <span className="text-[#1e90ff]">{q.progress_percent}%</span>
+                    </div>
+                    <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#0b4a74] to-[#1e90ff] rounded-full transition-all duration-700"
+                        style={{ width: `${q.progress_percent}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {(q.start_date || q.estimated_end_date) && (
+                    <div className="flex justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-700/50">
+                      <span>เริ่มงาน: {q.start_date || '-'}</span>
+                      <span>คาดว่าเสร็จ: {q.estimated_end_date || '-'}</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 7. CONTACT SECTION */}
+      <section id="contact" className="py-16 sm:py-24 bg-[#0b4a74] text-white relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-start relative z-10">
+          {/* Contact Details */}
+          <div className="space-y-6 sm:space-y-8">
+            <span className="inline-block px-3.5 py-1 bg-white/10 text-white rounded-full text-xs font-bold uppercase tracking-wider">
+              GET IN TOUCH
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight">
+              พร้อมเริ่มโปรเจกต์ <br className="hidden sm:inline" />กับเราแล้วหรือยัง?
+            </h2>
+            <p className="text-slate-200 text-base sm:text-lg font-light italic border-l-4 border-[#1e90ff] pl-4 sm:pl-6 py-1">
               "เชื่อมต่อทุกความฝันในการก่อสร้าง ด้วยคุณภาพงานวิศวกรรมระดับมาตรฐาน"
             </p>
-            <div className="space-y-6 pt-6">
-              <div className="flex gap-5 items-center">
-                <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-2xl">📞</div>
-                <div>
-                  <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">โทรสอบถาม</p>
-                  <p className="text-2xl font-bold">098-219-2091</p>
+
+            <div className="space-y-4 sm:space-y-6 pt-2">
+              {/* Phone Item */}
+              <a
+                href="tel:0982192091"
+                className="flex gap-4 items-center p-3 sm:p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition active:scale-98 border border-white/10"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/10 flex items-center justify-center text-xl sm:text-2xl shrink-0 text-[#1e90ff]">
+                  <Phone className="w-6 h-6" />
                 </div>
-              </div>
-              <div className="flex gap-5 items-center">
-                <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-2xl">✉️</div>
                 <div>
-                  <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">อีเมล</p>
-                  <p className="text-2xl font-bold">civilconnekt@gamil.com</p>
+                  <p className="text-slate-300 text-xs font-bold uppercase tracking-wider">โทรสอบถามประเมินราคา</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white">098-219-2091</p>
                 </div>
-              </div>
-              <div className="flex gap-5 items-center">
-                <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-2xl">📍</div>
+              </a>
+
+              {/* Email Item */}
+              <a
+                href="mailto:civilconnekt@gmail.com"
+                className="flex gap-4 items-center p-3 sm:p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition active:scale-98 border border-white/10"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/10 flex items-center justify-center text-xl sm:text-2xl shrink-0 text-[#1e90ff]">
+                  <Mail className="w-6 h-6" />
+                </div>
                 <div>
-                  <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">ที่อยู่บริษัท</p>
-                  <p className="text-base font-bold leading-snug mt-1">203 หมู่ที่ 9 ตำบลป่าก่อดำ อำเภอแม่ลาว จ.เชียงราย 57250</p>
+                  <p className="text-slate-300 text-xs font-bold uppercase tracking-wider">อีเมลติดต่องาน</p>
+                  <p className="text-lg sm:text-2xl font-bold text-white break-all">civilconnekt@gmail.com</p>
                 </div>
-              </div>
+              </a>
+
+              {/* Location Item */}
+              <a
+                href="https://maps.google.com/?q=203+หมู่ที่+9+ตำบลป่าก่อดำ+อำเภอแม่ลาว+จ.เชียงราย+57250"
+                target="_blank"
+                rel="noreferrer"
+                className="flex gap-4 items-center p-3 sm:p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition active:scale-98 border border-white/10"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/10 flex items-center justify-center text-xl sm:text-2xl shrink-0 text-[#1e90ff]">
+                  <MapPin className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-slate-300 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
+                    <span>ที่อยู่สำนักงาน</span>
+                    <ExternalLink className="w-3.5 h-3.5 inline" />
+                  </p>
+                  <p className="text-sm sm:text-base font-bold leading-snug mt-0.5 text-white">
+                    203 หมู่ที่ 9 ตำบลป่าก่อดำ อำเภอแม่ลาว จ.เชียงราย 57250
+                  </p>
+                </div>
+              </a>
             </div>
           </div>
-          <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl text-slate-900">
-            <h3 className="text-2xl font-bold mb-8 text-center">ส่งข้อความหาเรา</h3>
+
+          {/* Form Container */}
+          <div className="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 md:p-10 shadow-2xl text-slate-900 border border-slate-100">
+            <h3 className="text-xl sm:text-2xl font-extrabold mb-6 text-center text-slate-900">ส่งข้อความหาเรา</h3>
 
             {contactSuccess ? (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-8 text-center text-emerald-800 space-y-4">
-                <div className="text-5xl">🎉</div>
-                <h4 className="text-xl font-extrabold text-emerald-900">ส่งข้อมูลสำเร็จเรียบร้อยแล้ว!</h4>
-                <p className="text-sm text-emerald-700 leading-relaxed font-medium">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 sm:p-8 text-center text-emerald-800 space-y-3">
+                <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
+                <h4 className="text-lg sm:text-xl font-extrabold text-emerald-900">ส่งข้อมูลสำเร็จเรียบร้อยแล้ว!</h4>
+                <p className="text-xs sm:text-sm text-emerald-700 leading-relaxed font-medium">
                   ขอบคุณที่สนใจบริการของ Civil Connek เจ้าหน้าที่ของเราจะติดต่อกลับทางเบอร์โทรศัพท์โดยเร็วที่สุด
                 </p>
                 <button
@@ -407,10 +517,10 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleContactSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+              <form onSubmit={handleContactSubmit} className="space-y-4 sm:space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
                       ชื่อผู้ติดต่อ <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -419,11 +529,11 @@ export default function Home() {
                       placeholder="กรอกชื่อของคุณ..."
                       value={contactName}
                       onChange={e => setContactName(e.target.value)}
-                      className="w-full h-14 bg-slate-50 border border-slate-200 rounded-xl px-4 text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e90ff] transition text-sm"
+                      className="w-full h-12 sm:h-14 bg-slate-50 border border-slate-200 rounded-xl px-4 text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e90ff] transition text-base"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
                       เบอร์โทรศัพท์ <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -432,31 +542,35 @@ export default function Home() {
                       placeholder="0xx-xxx-xxxx"
                       value={contactPhone}
                       onChange={e => setContactPhone(e.target.value)}
-                      className="w-full h-14 bg-slate-50 border border-slate-200 rounded-xl px-4 text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e90ff] transition text-sm"
+                      className="w-full h-12 sm:h-14 bg-slate-50 border border-slate-200 rounded-xl px-4 text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e90ff] transition text-base"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">รายละเอียดโปรเจกต์</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">รายละเอียดโปรเจกต์</label>
                   <textarea
                     rows={3}
                     placeholder="คุณกำลังสนใจก่อสร้างประเภทไหน หรือต้องการสอบถามเรื่องใด..."
                     value={contactDetail}
                     onChange={e => setContactDetail(e.target.value)}
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e90ff] transition text-sm"
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e90ff] transition text-base"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={contactSubmitting}
-                  className="w-full py-5 bg-[#1e90ff] text-white font-black rounded-xl hover:bg-slate-900 transition-all shadow-lg hover:shadow-[#1e90ff]/30 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-4 sm:py-4.5 bg-[#1e90ff] text-white font-black rounded-xl hover:bg-slate-900 transition-all shadow-lg hover:shadow-[#1e90ff]/30 disabled:opacity-50 flex items-center justify-center gap-2 text-base active:scale-98"
                 >
                   {contactSubmitting ? (
                     <>
-                      <span className="animate-spin text-lg">🌀</span> กำลังส่งข้อมูล...
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>กำลังส่งข้อมูล...</span>
                     </>
                   ) : (
-                    'ส่งข้อมูลให้เจ้าหน้าที่ติดต่อกลับ'
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>ส่งข้อมูลให้เจ้าหน้าที่ติดต่อกลับ</span>
+                    </>
                   )}
                 </button>
               </form>
@@ -465,21 +579,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. ส่วนท้าย (FOOTER) */}
-      <footer className="py-12 bg-slate-50 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-3 opacity-60">
-            <div className="relative w-8 h-8">
+      {/* 8. FOOTER */}
+      <footer className="py-10 bg-slate-50 border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+          <div className="flex items-center gap-3 opacity-75">
+            <div className="relative w-8 h-8 shrink-0">
               <Image src="/logo.png" alt="โลโก้ CIVIL CONNEK" fill sizes="32px" className="object-contain" />
             </div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">CIVIL CONNEK CO., LTD.</p>
+            <p className="text-xs font-extrabold text-slate-700 uppercase tracking-widest">CIVIL CONNEK CO., LTD.</p>
           </div>
-          <p className="text-[10px] md:text-xs font-bold text-slate-400 tracking-widest">
+          <p className="text-[10px] sm:text-xs font-bold text-slate-400 tracking-wider">
             COPYRIGHT © 2026 บริษัท ซีวิล คอนเนค จำกัด - ALL RIGHTS RESERVED.
           </p>
         </div>
       </footer>
 
+      {/* 9. FLOATING MOBILE QUICK ACTION BAR */}
+      <FloatingMobileBar />
     </div>
   )
 }
