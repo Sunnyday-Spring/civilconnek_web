@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Project, ProjectPhoto } from '@/lib/supabase/types'
 import {
   ArrowLeft,
   Building2,
+  Save,
   Plus,
   Trash2,
   Upload,
@@ -21,10 +23,15 @@ interface GalleryPhotoItem {
   file: File | null
   url: string
   label: string
+  existingId?: string
 }
 
-export default function AddProjectPage() {
+export default function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params)
+  const id = resolvedParams.id
   const router = useRouter()
+
+  const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
   // Form State
@@ -44,6 +51,67 @@ export default function AddProjectPage() {
   // Gallery Photos State
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhotoItem[]>([])
 
+  // Load Existing Project
+  useEffect(() => {
+    async function loadProjectData() {
+      setLoading(true)
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*, photos:project_photos(*)')
+          .eq('id', id)
+          .single()
+
+        if (error || !data) {
+          alert('ไม่พบข้อมูลโครงการนี้')
+          router.push('/admin/projects')
+          return
+        }
+
+        const proj = data as (Project & { photos?: ProjectPhoto[] })
+        setTitle(proj.title || '')
+        setLocation(proj.location || '')
+        setYear(proj.year || new Date().getFullYear().toString())
+        setType(proj.type || 'รับเหมาก่อสร้างครบวงจร')
+        setDesc(proj.description || proj.desc || '')
+
+        const cat = proj.category || 'งานสถาปัตยกรรม'
+        const standardCats = ['งานสถาปัตยกรรม', 'งานโครงสร้าง', 'งานอาคารพักอาศัย', 'งานปรับปรุงรีโนเวท']
+        if (standardCats.includes(cat)) {
+          setCategory(cat)
+        } else {
+          setCategory('อื่นๆ')
+          setCustomCategory(cat)
+        }
+
+        setCoverPreview(proj.cover_image || '')
+        setCoverUrlInput(proj.cover_image || '')
+
+        if (proj.photos && proj.photos.length > 0) {
+          const sortedPhotos = [...proj.photos].sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+          setGalleryPhotos(
+            sortedPhotos.map(p => ({
+              id: p.id,
+              existingId: p.id,
+              file: null,
+              url: p.img,
+              label: p.label || 'ขั้นตอนการทำงาน',
+            }))
+          )
+        }
+      } catch (err: any) {
+        console.error('Load project for edit error:', err)
+        alert(`เกิดข้อผิดพลาดในการดึงข้อมูล: ${err.message}`)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadProjectData()
+  }, [id, router])
+
+  // Handle Cover File
   const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -52,6 +120,7 @@ export default function AddProjectPage() {
     }
   }
 
+  // Add Gallery Photo
   const addGalleryPhoto = () => {
     setGalleryPhotos(prev => [
       ...prev,
@@ -64,10 +133,11 @@ export default function AddProjectPage() {
     ])
   }
 
-  const updateGalleryPhoto = (id: string, field: keyof GalleryPhotoItem, value: any) => {
+  // Update Gallery Photo
+  const updateGalleryPhoto = (photoId: string, field: keyof GalleryPhotoItem, value: any) => {
     setGalleryPhotos(prev =>
       prev.map(item => {
-        if (item.id !== id) return item
+        if (item.id !== photoId) return item
         if (field === 'file') {
           const file = value as File
           return {
@@ -81,10 +151,12 @@ export default function AddProjectPage() {
     )
   }
 
-  const removeGalleryPhoto = (id: string) => {
-    setGalleryPhotos(prev => prev.filter(item => item.id !== id))
+  // Remove Gallery Photo
+  const removeGalleryPhoto = (photoId: string) => {
+    setGalleryPhotos(prev => prev.filter(item => item.id !== photoId))
   }
 
+  // File to Base64
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -94,6 +166,7 @@ export default function AddProjectPage() {
     })
   }
 
+  // Upload helper
   const uploadFileToSupabase = async (supabase: any, file: File, folder: string): Promise<string> => {
     try {
       const fileExt = file.name.split('.').pop()
@@ -117,36 +190,32 @@ export default function AddProjectPage() {
     }
   }
 
+  // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!title.trim() || !location.trim()) {
       alert('กรุณากรอกชื่อโครงการและสถานที่ให้ครบถ้วน')
       return
     }
 
     setSubmitting(true)
-
     try {
       const supabase = createClient()
       const finalCategory = category === 'อื่นๆ' ? customCategory : category
 
+      // 1. Cover URL
       let finalCoverUrl = coverUrlInput.trim()
       if (coverFile) {
         finalCoverUrl = await uploadFileToSupabase(supabase, coverFile, 'covers')
       }
-
       if (!finalCoverUrl || finalCoverUrl.startsWith('blob:')) {
-        finalCoverUrl = coverFile ? await fileToBase64(coverFile) : '/Project/hor-puk-chang-ton/complete.jpg'
+        finalCoverUrl = coverPreview || '/Project/hor-puk-chang-ton/complete.jpg'
       }
 
-      if (!finalCoverUrl) {
-        finalCoverUrl = '/Project/hor-puk-chang-ton/complete.jpg'
-      }
-
-      const { data: newProject, error: projectError } = await (supabase
+      // 2. Update `projects` table
+      const { error: updateError } = await (supabase
         .from('projects') as any)
-        .insert({
+        .update({
           title: title.trim(),
           category: finalCategory.trim(),
           location: location.trim(),
@@ -155,16 +224,17 @@ export default function AddProjectPage() {
           type: type.trim(),
           cover_image: finalCoverUrl,
         })
-        .select()
-        .single()
+        .eq('id', id)
 
-      if (projectError) {
-        throw new Error(`สร้างโครงการไม่สำเร็จ: ${projectError.message}`)
+      if (updateError) {
+        throw new Error(`อัปเดตโครงการไม่สำเร็จ: ${updateError.message}`)
       }
 
-      if (galleryPhotos.length > 0 && newProject) {
-        const photoInserts = []
+      // 3. Clear and Re-insert Gallery Photos
+      await (supabase.from('project_photos') as any).delete().eq('project_id', id)
 
+      if (galleryPhotos.length > 0) {
+        const photoInserts = []
         for (let i = 0; i < galleryPhotos.length; i++) {
           const item = galleryPhotos[i]
           let photoUrl = item.url.trim()
@@ -177,9 +247,9 @@ export default function AddProjectPage() {
             }
           }
 
-          if (photoUrl) {
+          if (photoUrl && !photoUrl.startsWith('blob:')) {
             photoInserts.push({
-              project_id: newProject.id,
+              project_id: id,
               img: photoUrl,
               label: item.label || `ขั้นตอนที่ ${i + 1}`,
               display_order: i + 1,
@@ -192,7 +262,7 @@ export default function AddProjectPage() {
         }
       }
 
-      alert('🎉 บันทึกข้อมูลผลงานเรียบร้อยแล้ว!')
+      alert('🎉 บันทึกการแก้ไขผลงานเรียบร้อยแล้ว!')
       router.push('/admin/projects')
       router.refresh()
     } catch (err: any) {
@@ -200,6 +270,15 @@ export default function AddProjectPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center font-sans">
+        <Loader2 className="w-10 h-10 text-[#1e90ff] animate-spin mb-3" />
+        <p className="text-slate-600 font-bold text-sm">กำลังโหลดข้อมูลโครงการเพื่อแก้ไข...</p>
+      </div>
+    )
   }
 
   return (
@@ -216,7 +295,7 @@ export default function AddProjectPage() {
           </Link>
           <h1 className="font-extrabold text-sm tracking-tight text-white flex items-center gap-2">
             <Building2 className="w-4 h-4 text-[#1e90ff]" />
-            <span>เพิ่มผลงานใหม่ (Add Project)</span>
+            <span>แก้ไขผลงาน (Edit Project)</span>
           </h1>
         </div>
       </nav>
@@ -224,7 +303,6 @@ export default function AddProjectPage() {
       {/* Main Container */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
         <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
-          
           {/* Section 1: ข้อมูลทั่วไป */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
             <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 border-b border-slate-100 pb-4 flex items-center gap-2">
@@ -341,7 +419,7 @@ export default function AddProjectPage() {
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-black text-slate-500 uppercase tracking-wider block mb-2">
-                    เลือกรูปภาพจากอุปกรณ์
+                    เลือกรูปภาพใหม่จากอุปกรณ์
                   </label>
                   <label className="flex items-center justify-center gap-2 w-full h-12 bg-blue-50 hover:bg-blue-100 text-[#0b4a74] rounded-xl border border-blue-200 cursor-pointer font-bold text-xs transition">
                     <Upload className="w-4 h-4" />
@@ -371,7 +449,7 @@ export default function AddProjectPage() {
                 ) : (
                   <div className="h-full flex flex-col items-center justify-center text-slate-400">
                     <ImageIcon className="w-8 h-8 mb-1" />
-                    <span className="text-xs font-bold">ยังไม่ได้เลือกรูปปก</span>
+                    <span className="text-xs font-bold">ยังไม่มีรูปปก</span>
                   </div>
                 )}
               </div>
@@ -462,12 +540,12 @@ export default function AddProjectPage() {
               {submitting ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>กำลังบันทึกข้อมูล...</span>
+                  <span>กำลังบันทึกการแก้ไข...</span>
                 </>
               ) : (
                 <>
-                  <Plus className="w-5 h-5" />
-                  <span>บันทึกและเพิ่มผลงาน</span>
+                  <Save className="w-5 h-5" />
+                  <span>บันทึกการแก้ไขผลงาน</span>
                 </>
               )}
             </button>
