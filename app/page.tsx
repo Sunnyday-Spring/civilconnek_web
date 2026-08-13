@@ -1,7 +1,10 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { fetchProjects, fetchQueue } from '@/lib/supabase/projects'
+import { Project, QueueItem } from '@/lib/supabase/types'
+import { createClient } from '@/lib/supabase/client'
 
 function DrawBorderCard({ children, className = '', href = '/services' }: {
   children: React.ReactNode
@@ -80,24 +83,54 @@ function DrawBorderCard({ children, className = '', href = '/services' }: {
   )
 }
 
-// ----------------------------------------------------------------------
-// สร้างข้อมูลผลงานไว้ตรงนี้ เพื่อให้ง่ายต่อการแก้ไขและเพิ่มโครงการใหม่ในอนาคต
-// ----------------------------------------------------------------------
-const projectsData = [
-  {
-    id: 1,
-    img: '/Project/hor-puk-chang-ton/complete.jpg',
-    title: 'หอ',
-    category: 'ที่พักอาศัย',
-    location: 'เชียงราย',
-  },
-]
-
-
-
-
-
 export default function Home() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [queues, setQueues] = useState<QueueItem[]>([])
+
+  // Contact Form State
+  const [contactName, setContactName] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [contactDetail, setContactDetail] = useState('')
+  const [contactSubmitting, setContactSubmitting] = useState(false)
+  const [contactSuccess, setContactSuccess] = useState(false)
+
+  useEffect(() => {
+    fetchProjects().then(setProjects)
+    fetchQueue().then(setQueues)
+  }, [])
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!contactName.trim() || !contactPhone.trim()) {
+      alert('กรุณากรอกชื่อและเบอร์โทรศัพท์สำหรับติดต่อกลับ')
+      return
+    }
+
+    setContactSubmitting(true)
+    try {
+      const supabase = createClient()
+      const { error } = await (supabase.from('contact_messages') as any).insert({
+        name: contactName.trim(),
+        phone: contactPhone.trim(),
+        detail: contactDetail.trim(),
+        status: 'new',
+      })
+
+      if (error) {
+        alert(`ส่งข้อมูลไม่สำเร็จ: ${error.message}`)
+      } else {
+        setContactSuccess(true)
+        setContactName('')
+        setContactPhone('')
+        setContactDetail('')
+      }
+    } catch (err: any) {
+      alert(`เกิดข้อผิดพลาด: ${err.message}`)
+    } finally {
+      setContactSubmitting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
 
@@ -115,7 +148,7 @@ export default function Home() {
           </div>
           <div className="hidden md:flex gap-8 text-sm font-bold text-slate-600">
             <Link href="/" className="hover:text-[#0b4a74] transition">หน้าแรก</Link>
-            <Link href="/services" className="hover:text-[#0b4a74] transition">บริการของเรา</Link>
+            <Link href="#services" className="hover:text-[#0b4a74] transition">บริการของเรา</Link>
             <Link href="#projects" className="hover:text-[#0b4a74] transition">ผลงาน</Link>
             <Link href="#about" className="hover:text-[#0b4a74] transition">เกี่ยวกับเรา</Link>
             <Link href="#contact" className="hover:text-[#0b4a74] transition">ติดต่อสอบถาม</Link>
@@ -142,8 +175,8 @@ export default function Home() {
               มุ่งเน้นคุณภาพ มาตรฐานวิศวกรรม และความพึงพอใจของลูกค้าเป็นสำคัญ
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
-              <Link href="/services" className="bg-[#1e90ff] text-white px-10 py-4 rounded-lg font-bold text-lg hover:shadow-lg hover:shadow-[#1e90ff]/40 transition-all hover:-translate-y-1">ชมผลงานของเรา</Link>
-              <Link href="#contact" className="bg-white/10 backdrop-blur-md text-white border border-white/30 px-10 py-4 rounded-lg font-bold text-lg hover:bg-white/20 transition">รู้จักเรามากขึ้น</Link>
+              <Link href="#projects" className="bg-[#1e90ff] text-white px-10 py-4 rounded-lg font-bold text-lg hover:shadow-lg hover:shadow-[#1e90ff]/40 transition-all hover:-translate-y-1">ชมผลงานของเรา</Link>
+              <Link href="#contact" className="bg-white/10 backdrop-blur-md text-white border border-white/30 px-10 py-4 rounded-lg font-bold text-lg hover:bg-white/20 transition">ติดต่อเรา</Link>
             </div>
           </div>
         </div>
@@ -226,31 +259,102 @@ export default function Home() {
             <Link href="/projects" className="text-[#0b4a74] font-bold border-b-2 border-[#0b4a74] pb-1 hover:text-[#1e90ff] hover:border-[#1e90ff] transition">ดูผลงานทั้งหมด</Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {projectsData.map((project) => (
-              <Link key={`${project.id}-${project.img}`} href={`/project/${project.id}`} className="group relative aspect-[3/4] bg-slate-200 rounded-3xl overflow-hidden shadow-lg block">
-                {/* รูปภาพ */}
-                <Image
-                  src={project.img}
-                  alt={project.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                {/* gradient ด้านล่าง — แสดงตลอดเวลา */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/20 to-transparent" />
-                {/* ข้อความ — แสดงตลอดเวลา ไม่ต้อง hover */}
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <p className="text-[#1e90ff] text-xs font-bold uppercase tracking-widest mb-2">{project.category}</p>
-                  <h4 className="text-white text-lg font-bold leading-tight">{project.title}</h4>
-                  <p className="text-slate-400 mt-2 text-xs">📍 {project.location}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {projects.length === 0 ? (
+            <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-12 text-center max-w-xl mx-auto">
+              <div className="text-4xl mb-3">🏗️</div>
+              <h3 className="text-lg font-bold text-slate-800 mb-1">กำลังอัปเดตผลงานโครงการ</h3>
+              <p className="text-xs text-slate-500 font-medium">ผลงานโครงการก่อสร้างใหม่กำลังถูกเพิ่มเข้ามา เร็วๆ นี้</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {projects.map((project) => {
+                const rawImg = project.cover_image || (project as any).img || ''
+                const coverImg = rawImg && !rawImg.startsWith('blob:') ? rawImg : '/Project/hor-puk-chang-ton/complete.jpg'
+                return (
+                  <Link key={`${project.id}`} href={`/project/${project.id}`} className="group relative aspect-[3/4] bg-slate-200 rounded-3xl overflow-hidden shadow-lg block">
+                    {/* รูปภาพ */}
+                    <Image
+                      src={coverImg}
+                      alt={project.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    {/* gradient ด้านล่าง — แสดงตลอดเวลา */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/20 to-transparent" />
+                    {/* ข้อความ — แสดงตลอดเวลา ไม่ต้อง hover */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6">
+                      <p className="text-[#1e90ff] text-xs font-bold uppercase tracking-widest mb-2">{project.category}</p>
+                      <h4 className="text-white text-lg font-bold leading-tight">{project.title}</h4>
+                      <p className="text-slate-400 mt-2 text-xs">📍 {project.location}</p>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
 
         </div>
       </section>
+
+      {/* 5.5. ตารางคิวและสถานะงานก่อสร้าง (CONSTRUCTION QUEUE TRACKER) */}
+      <section id="queue" className="py-24 bg-slate-900 text-white overflow-hidden relative">
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <span className="inline-block px-4 py-1 bg-[#1e90ff]/20 text-[#1e90ff] rounded-full text-xs font-bold tracking-widest uppercase mb-3">
+                LIVE SITE TRACKER
+              </span>
+              <h2 className="text-4xl md:text-5xl font-extrabold text-white">ตารางคิวและสถานะงานก่อสร้าง</h2>
+              <p className="text-slate-400 mt-3 text-lg font-light">ติดตามความคืบหน้าการดำเนินงานก่อสร้างแต่ละไซต์งานแบบเรียลไทม์</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {queues.map((q) => {
+                const statusInfo =
+                  q.status === 'in_progress'
+                    ? { label: '🏗️ กำลังก่อสร้าง', bg: 'bg-blue-500/20 text-[#1e90ff] border-blue-500/30' }
+                    : q.status === 'completed'
+                    ? { label: '✅ เสร็จเรียบร้อย', bg: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' }
+                    : { label: '⏳ รอคิวเริ่มงาน', bg: 'bg-amber-500/20 text-amber-300 border-amber-500/30' }
+
+                return (
+                  <div key={q.id} className="bg-slate-800/80 border border-slate-700/80 rounded-3xl p-6 space-y-5 backdrop-blur-md">
+                    <div className="flex justify-between items-start gap-3">
+                      <div>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${statusInfo.bg}`}>
+                          {statusInfo.label}
+                        </span>
+                        <h3 className="text-xl font-bold text-white mt-3 leading-snug">{q.project_name}</h3>
+                        <p className="text-xs text-slate-400 mt-1">📍 {q.location} · 👤 {q.client_name}</p>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-2 pt-2">
+                      <div className="flex justify-between items-center text-xs font-bold">
+                        <span className="text-slate-400 uppercase tracking-wider">ความคืบหน้า</span>
+                        <span className="text-[#1e90ff]">{q.progress_percent}%</span>
+                      </div>
+                      <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#0b4a74] to-[#1e90ff] rounded-full transition-all duration-700"
+                          style={{ width: `${q.progress_percent}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {(q.start_date || q.estimated_end_date) && (
+                      <div className="flex justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-700/50">
+                        <span>เริ่มงาน: {q.start_date || '-'}</span>
+                        <span>คาดว่าเสร็จ: {q.estimated_end_date || '-'}</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </section>
 
       {/* 6. ส่วนติดต่อเรา (CONTACT) */}
       <section id="contact" className="py-24 bg-[#0b4a74] text-white overflow-hidden relative">
@@ -279,32 +383,84 @@ export default function Home() {
                 <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-2xl">📍</div>
                 <div>
                   <p className="text-slate-400 text-sm font-bold uppercase tracking-wider">ที่อยู่บริษัท</p>
-                  <p className="text-lg font-bold">เลขที่ xxx ถนน... เขต... กรุงเทพฯ</p>
+                  <p className="text-base font-bold leading-snug mt-1">203 หมู่ที่ 9 ตำบลป่าก่อดำ อำเภอแม่ลาว จ.เชียงราย 57250</p>
                 </div>
               </div>
             </div>
           </div>
           <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl text-slate-900">
             <h3 className="text-2xl font-bold mb-8 text-center">ส่งข้อความหาเรา</h3>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">ชื่อผู้ติดต่อ</label>
-                  <div className="h-14 bg-slate-50 border border-slate-200 rounded-xl px-4 flex items-center text-slate-400">กรอกชื่อของคุณ...</div>
+
+            {contactSuccess ? (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-8 text-center text-emerald-800 space-y-4">
+                <div className="text-5xl">🎉</div>
+                <h4 className="text-xl font-extrabold text-emerald-900">ส่งข้อมูลสำเร็จเรียบร้อยแล้ว!</h4>
+                <p className="text-sm text-emerald-700 leading-relaxed font-medium">
+                  ขอบคุณที่สนใจบริการของ Civil Connek เจ้าหน้าที่ของเราจะติดต่อกลับทางเบอร์โทรศัพท์โดยเร็วที่สุด
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setContactSuccess(false)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-3 rounded-xl transition mt-2"
+                >
+                  ส่งข้อความเพิ่ม
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleContactSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                      ชื่อผู้ติดต่อ <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="กรอกชื่อของคุณ..."
+                      value={contactName}
+                      onChange={e => setContactName(e.target.value)}
+                      className="w-full h-14 bg-slate-50 border border-slate-200 rounded-xl px-4 text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e90ff] transition text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                      เบอร์โทรศัพท์ <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="0xx-xxx-xxxx"
+                      value={contactPhone}
+                      onChange={e => setContactPhone(e.target.value)}
+                      className="w-full h-14 bg-slate-50 border border-slate-200 rounded-xl px-4 text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e90ff] transition text-sm"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">เบอร์โทรศัพท์</label>
-                  <div className="h-14 bg-slate-50 border border-slate-200 rounded-xl px-4 flex items-center text-slate-400">0xx-xxx-xxxx</div>
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">รายละเอียดโปรเจกต์</label>
+                  <textarea
+                    rows={3}
+                    placeholder="คุณกำลังสนใจก่อสร้างประเภทไหน หรือต้องการสอบถามเรื่องใด..."
+                    value={contactDetail}
+                    onChange={e => setContactDetail(e.target.value)}
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1e90ff] transition text-sm"
+                  />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">รายละเอียดโปรเจกต์</label>
-                <div className="h-32 bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-400">คุณกำลังสนใจก่อสร้างประเภทไหน...</div>
-              </div>
-              <button className="w-full py-5 bg-[#1e90ff] text-white font-black rounded-xl hover:bg-slate-900 transition-all shadow-lg hover:shadow-[#1e90ff]/30">
-                ส่งข้อมูลให้เจ้าหน้าที่ติดต่อกลับ
-              </button>
-            </div>
+                <button
+                  type="submit"
+                  disabled={contactSubmitting}
+                  className="w-full py-5 bg-[#1e90ff] text-white font-black rounded-xl hover:bg-slate-900 transition-all shadow-lg hover:shadow-[#1e90ff]/30 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {contactSubmitting ? (
+                    <>
+                      <span className="animate-spin text-lg">🌀</span> กำลังส่งข้อมูล...
+                    </>
+                  ) : (
+                    'ส่งข้อมูลให้เจ้าหน้าที่ติดต่อกลับ'
+                  )}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </section>

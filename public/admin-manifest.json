@@ -1,0 +1,21 @@
+{
+  "name": "CIVIL CONNEK - ระบบจัดการหลังบ้าน",
+  "short_name": "CC Admin",
+  "description": "ระบบควบคุมและจัดการผลงาน คิวงานก่อสร้าง และข้อความติดต่อ บริษัท ซีวิล คอนเนค จำกัด",
+  "start_url": "/admin",
+  "display": "standalone",
+  "background_color": "#0b4a74",
+  "theme_color": "#0b4a74",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

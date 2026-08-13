@@ -1,32 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { fetchProjectById } from '@/lib/supabase/projects'
 
-const projectsData = [
-  {
-    id: 1,
-    title: 'หอพักช่างต้น',
-    category: 'ที่พักอาศัย',
-    location: 'เชียงราย',
-    desc: 'โครงการก่อสร้างหอพักพักอาศัยสำหรับช่างและแรงงาน ออกแบบและรับเหมาก่อสร้างครบวงจร ตั้งแต่การเตรียมพื้นที่จนถึงส่งมอบงาน',
-    year: '2024',
-    type: 'รับเหมาก่อสร้างครบวงจร',
-    photos: [
-      { img: '/Project/hor-puk-chang-ton/render-front.jpg', label: 'แบบ 3D ด้านหน้า' },
-      { img: '/Project/hor-puk-chang-ton/render-side.jpg',  label: 'แบบ 3D ด้านข้าง' },
-      { img: '/Project/hor-puk-chang-ton/site-prepare.jpg', label: 'เตรียมพื้นที่' },
-      { img: '/Project/hor-puk-chang-ton/foundation.jpg',   label: 'งานฐานราก' },
-      { img: '/Project/hor-puk-chang-ton/column.jpg',       label: 'งานเสาคอนกรีต' },
-      { img: '/Project/hor-puk-chang-ton/footing.jpg',      label: 'งานคาน' },
-      { img: '/Project/hor-puk-chang-ton/structure.jpg',    label: 'โครงสร้างอาคาร' },
-      { img: '/Project/hor-puk-chang-ton/wall.jpg',         label: 'งานผนัง' },
-      { img: '/Project/hor-puk-chang-ton/roof.jpg',         label: 'งานหลังคา' },
-      { img: '/Project/hor-puk-chang-ton/complete.jpg',     label: 'งานแล้วเสร็จ' },
-    ],
-  },
-]
-
-export default function ProjectDetailPage({ params }: { params: { id: string } }) {
-  const project = projectsData.find(p => p.id === Number(params.id))
+export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const project = await fetchProjectById(id)
 
   if (!project) {
     return (
@@ -63,7 +41,19 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       </nav>
 
       <div className="relative h-[60vh] bg-slate-900 overflow-hidden">
-        <Image src={project.photos[project.photos.length - 1].img} alt={project.title} fill className="object-cover" priority />
+        <Image
+          src={
+            project.cover_image && !project.cover_image.startsWith('blob:')
+              ? project.cover_image
+              : project.photos && project.photos.length > 0 && !project.photos[0].img.startsWith('blob:')
+              ? project.photos[0].img
+              : '/Project/hor-puk-chang-ton/complete.jpg'
+          }
+          alt={project.title}
+          fill
+          className="object-cover"
+          priority
+        />
         <div className="absolute inset-0 bg-slate-950/50" />
         <div className="absolute bottom-0 left-0 right-0 p-10 max-w-7xl mx-auto">
           <div className="flex items-center gap-2 text-white/50 text-xs font-bold uppercase tracking-widest mb-4">
@@ -85,7 +75,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           <div className="md:col-span-2">
             <h2 className="text-2xl font-bold mb-4">รายละเอียดโครงการ</h2>
-            <p className="text-slate-500 leading-relaxed">{project.desc}</p>
+            <p className="text-slate-500 leading-relaxed">{project.description || project.desc}</p>
           </div>
           <div className="space-y-4">
             {[
@@ -107,14 +97,17 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
 
         <h2 className="text-2xl font-bold mb-6">รูปภาพโครงการทั้งหมด</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {project.photos.map((photo, i) => (
-            <div key={i} className="group relative aspect-[4/3] bg-slate-100 rounded-2xl overflow-hidden">
-              <Image src={photo.img} alt={photo.label} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/80 to-transparent p-4">
-                <p className="text-white text-sm font-bold">{photo.label}</p>
+          {(project.photos && project.photos.length > 0 ? project.photos : [{ id: '1', img: project.cover_image, label: 'รูปผลงานหลัก' }]).map((photo, i) => {
+            const imgSrc = photo.img && !photo.img.startsWith('blob:') ? photo.img : '/Project/hor-puk-chang-ton/complete.jpg'
+            return (
+              <div key={photo.id || i} className="group relative aspect-[4/3] bg-slate-100 rounded-2xl overflow-hidden">
+                <Image src={imgSrc} alt={photo.label} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/80 to-transparent p-4">
+                  <p className="text-white text-sm font-bold">{photo.label}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </section>
 
