@@ -80,6 +80,23 @@ function DrawBorderCard({ children, className = '', href = '/services' }: {
   )
 }
 
+// ----------------------------------------------------------------------
+// สร้างข้อมูลผลงานไว้ตรงนี้ เพื่อให้ง่ายต่อการแก้ไขและเพิ่มโครงการใหม่ในอนาคต
+// ----------------------------------------------------------------------
+const projectsData = [
+  {
+    id: 1,
+    img: '/Project/hor-puk-chang-ton/complete.jpg',
+    title: 'หอ',
+    category: 'ที่พักอาศัย',
+    location: 'เชียงราย',
+  },
+]
+
+
+
+
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
@@ -208,20 +225,30 @@ export default function Home() {
             </div>
             <Link href="/projects" className="text-[#0b4a74] font-bold border-b-2 border-[#0b4a74] pb-1 hover:text-[#1e90ff] hover:border-[#1e90ff] transition">ดูผลงานทั้งหมด</Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="group relative aspect-[3/4] bg-slate-100 rounded-[2rem] overflow-hidden shadow-lg border border-slate-200">
-                <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-bold italic">
-                  [ รูปภาพผลงานโครงการ {i} ]
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {projectsData.map((project) => (
+              <Link key={`${project.id}-${project.img}`} href={`/project/${project.id}`} className="group relative aspect-[3/4] bg-slate-200 rounded-3xl overflow-hidden shadow-lg block">
+                {/* รูปภาพ */}
+                <Image
+                  src={project.img}
+                  alt={project.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                {/* gradient ด้านล่าง — แสดงตลอดเวลา */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/20 to-transparent" />
+                {/* ข้อความ — แสดงตลอดเวลา ไม่ต้อง hover */}
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <p className="text-[#1e90ff] text-xs font-bold uppercase tracking-widest mb-2">{project.category}</p>
+                  <h4 className="text-white text-lg font-bold leading-tight">{project.title}</h4>
+                  <p className="text-slate-400 mt-2 text-xs">📍 {project.location}</p>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/20 to-transparent p-10 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
-                  <p className="text-[#1e90ff] text-sm font-bold uppercase tracking-widest mb-2">ประเภทโครงการ</p>
-                  <h4 className="text-white text-3xl font-bold">ชื่อโครงการตัวอย่าง {i}</h4>
-                  <p className="text-slate-300 mt-3 font-light text-sm">รายละเอียดเบื้องต้นของโครงการและสถานที่ตั้ง</p>
-                </div>
-              </div>
+              </Link>
             ))}
           </div>
+
         </div>
       </section>
 
@@ -287,8 +314,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-3 opacity-60">
             <div className="relative w-8 h-8">
-  <Image src="/logo.png" alt="โลโก้ CIVIL CONNEK" fill sizes="32px" className="object-contain" />
-</div>
+              <Image src="/logo.png" alt="โลโก้ CIVIL CONNEK" fill sizes="32px" className="object-contain" />
+            </div>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">CIVIL CONNEK CO., LTD.</p>
           </div>
           <p className="text-[10px] md:text-xs font-bold text-slate-400 tracking-widest">
