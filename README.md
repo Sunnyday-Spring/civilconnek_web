@@ -46,7 +46,7 @@ To run the application locally or deploy to production, create a `.env.local` fi
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://<your-supabase-project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
-ADMIN_PASSWORD=civilconnek1234
+ADMIN_PASSWORD=<your-password>
 ```
 
 ---
