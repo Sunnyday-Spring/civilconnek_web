@@ -1,5 +1,7 @@
 # Civil Connek Web Application & Administrative Portal
 
+[![CI Pipeline](https://github.com/Sunnyday-Spring/civilconnek_web/actions/workflows/ci.yml/badge.svg)](https://github.com/Sunnyday-Spring/civilconnek_web/actions/workflows/ci.yml)
+
 Civil Connek Web Application is an enterprise web solution and administrative management system developed for Civil Connek Co., Ltd. The system provides a public corporate web portal alongside a secure internal administration portal for managing project portfolios, tracking construction project queues, and processing client inquiries.
 
 ## System Overview
