@@ -27,7 +27,6 @@ import {
   Send,
   Award,
   Calendar,
-  Briefcase,
   Users,
   Smile,
 } from 'lucide-react'

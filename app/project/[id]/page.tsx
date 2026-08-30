@@ -9,9 +9,6 @@ import {
   Calendar,
   Layers,
   ArrowLeft,
-  Phone,
-  Mail,
-  ExternalLink,
   ChevronRight,
 } from 'lucide-react'
 

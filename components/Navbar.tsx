@@ -20,7 +20,7 @@ interface NavbarProps {
   activeTab?: string
 }
 
-export default function Navbar({ activeTab = 'home' }: NavbarProps) {
+export default function Navbar({}: NavbarProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
